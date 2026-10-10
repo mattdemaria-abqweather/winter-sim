@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Winter Operations Simulator</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; justify-content: center; padding: 20px; margin: 0; }
+    .card { background: #1e293b; border-radius: 12px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    h2 { color: #38bdf8; margin-top: 0; }
+    .tag { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; margin-bottom: 12px; }
+    .tag-high { background: #166534; color: #86efac; }
+    .tag-low { background: #991b1b; color: #fca5a5; }
+    .stat-box { background: #0f172a; padding: 12px; border-radius: 8px; margin: 16px 0; display: flex; justify-content: space-between; }
+    button { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-action { background: #0284c7; color: white; }
+    .btn-action:hover { background: #0369a1; }
+    .btn-hold { background: #475569; color: white; }
+    .btn-hold:hover { background: #334155; }
+    .feedback { background: #334155; padding: 12px; border-radius: 6px; margin-top: 12px; font-size: 0.9rem; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div id="game-ui">
+      <span id="round-num" style="color: #94a3b8; font-size: 0.85rem;">ROUND 1 OF 5</span>
+      <h2 id="round-title">Day 1: Winter Storm Outlook</h2>
+      <div id="conf-tag" class="tag tag-high">HIGH FORECASTER CONFIDENCE</div>
+      <p id="round-desc">NWS reports an 80% chance of heavy freezing rain during morning rush hour.</p>
+      
+      <div class="stat-box">
+        <div>Spent: <strong id="spent-val">$0</strong></div>
+        <div>Incidents: <strong id="inc-val">0</strong></div>
+      </div>
+
+      <button class="btn-action" onclick="makeChoice(true)">Pre-Treat Roads ($2,000)</button>
+      <button class="btn-hold" onclick="makeChoice(false)">Hold Operations ($0)</button>
+      <div id="feedback-box" class="feedback hidden"></div>
+    </div>
+
+    <div id="end-ui" class="hidden">
+      <h2>Simulation Complete</h2>
+      <p>Here is your final operational profile:</p>
+      <div class="stat-box" style="flex-direction: column; gap: 8px;">
+        <div>Total Operational Cost: <strong id="final-cost">$0</strong></div>
+        <div>Unwarned Ice Incidents: <strong id="final-inc">0</strong></div>
+      </div>
+      <p id="profile-text" style="line-height: 1.5; color: #cbd5e1;"></p>
+      <button class="btn-action" onclick="location.reload()">Replay Simulation</button>
+    </div>
+  </div>
+
+  <script>
+    const rounds = [
+      { prob: 0.8, conf: "HIGH", desc: "80% chance of heavy freezing rain during morning rush hour.", tagClass: "tag-high" },
+      { prob: 0.2, conf: "HIGH", desc: "20% chance of light black ice on bridge decks overnight.", tagClass: "tag-high" },
+      { prob: 0.2, conf: "LOW", desc: "20% chance of light black ice. Forecaster Note: High model spread / LOW CONFIDENCE in storm track.", tagClass: "tag-low" },
+      { prob: 0.4, conf: "LOW", desc: "40% chance of icy roadways. Forecaster Note: LOW CONFIDENCE in timing.", tagClass: "tag-low" },
+      { prob: 0.1, conf: "HIGH", desc: "10% chance of brief snow flurries. High model agreement.", tagClass: "tag-high" }
+    ];
+
+    let current = 0, spent = 0, incidents = 0, choices = [];
+
+    function makeChoice(tookAction) {
+      const r = rounds[current];
+      choices.push({ round: current + 1, action: tookAction, conf: r.conf, prob: r.prob });
+      
+      if (tookAction) {
+        spent += 2000;
+      } else if (Math.random() < r.prob) {
+        incidents++;
+        spent += 8000; // Penalty cost
+      }
+
+      document.getElementById('spent-val').innerText = '$' + spent.toLocaleString();
+      document.getElementById('inc-val').innerText = incidents;
+
+      current++;
+      if (current < rounds.length) {
+        loadRound();
+      } else {
+        showEnd();
+      }
+    }
+
+    function loadRound() {
+      const r = rounds[current];
+      document.getElementById('round-num').innerText = `ROUND ${current + 1} OF 5`;
+      document.getElementById('round-title').innerText = `Day ${current + 1}: Winter Storm Outlook`;
+      document.getElementById('round-desc').innerText = r.desc;
+      const tag = document.getElementById('conf-tag');
+      tag.innerText = `${r.conf} FORECASTER CONFIDENCE`;
+      tag.className = `tag ${r.tagClass}`;
+    }
+
+    function showEnd() {
+      document.getElementById('game-ui').classList.add('hidden');
+      document.getElementById('end-ui').classList.remove('hidden');
+      document.getElementById('final-cost').innerText = '$' + spent.toLocaleString();
+      document.getElementById('final-inc').innerText = incidents;
+      
+      const r2 = choices[1].action; // 20% High Conf
+      const r3 = choices[2].action; // 20% Low Conf
+
+      let text = "";
+      if (!r2 && r3) {
+        text = "<strong>Key Finding:</strong> Like most decision-makers in Dr. Lace Padilla's research, adding the 'LOW CONFIDENCE' label on Round 3 caused you to play it safe—even though the probability (20%) was identical to Round 2!";
+      } else {
+        text = "You completed the 5-day cycle. Compare your Round 2 vs. Round 3 choices with the rest of the room to see how 'Low Confidence' tags altered team decisions.";
+      }
+      document.getElementById('profile-text').innerHTML = text;
+    }
+  </script>
+</body>
+</html>
