@@ -1,116 +1,394 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Winter Operations Simulator</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; display: flex; justify-content: center; padding: 20px; margin: 0; }
-    .card { background: #1e293b; border-radius: 12px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-    h2 { color: #38bdf8; margin-top: 0; }
-    .tag { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; margin-bottom: 12px; }
-    .tag-high { background: #166534; color: #86efac; }
-    .tag-low { background: #991b1b; color: #fca5a5; }
-    .stat-box { background: #0f172a; padding: 12px; border-radius: 8px; margin: 16px 0; display: flex; justify-content: space-between; }
-    button { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-    .btn-action { background: #0284c7; color: white; }
-    .btn-action:hover { background: #0369a1; }
-    .btn-hold { background: #475569; color: white; }
-    .btn-hold:hover { background: #334155; }
-    .feedback { background: #334155; padding: 12px; border-radius: 6px; margin-top: 12px; font-size: 0.9rem; }
-    .hidden { display: none; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Winter Weather Decision Simulation</title>
+    <style>
+        *, *:before, *:after {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --border-color: #334155;
+            --accent-blue: #38bdf8;
+            --accent-blue-bg: rgba(56, 189, 248, 0.15);
+            --btn-treat: #0284c7;
+            --btn-treat-hover: #0369a1;
+            --btn-hold: #475569;
+            --btn-hold-hover: #334155;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .sim-container {
+            max-width: 680px;
+            width: 100%;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            height: fit-content;
+        }
+
+        .header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+
+        .round-badge {
+            background-color: var(--accent-blue);
+            color: #000;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+
+        .scenario-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin: 0 0 6px 0;
+            color: var(--text-main);
+        }
+
+        .budget-info {
+            font-size: 0.88rem;
+            color: var(--text-sub);
+            margin-bottom: 18px;
+            background-color: #0f172a;
+            padding: 10px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* NWS Table Styling */
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 18px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        th, td {
+            padding: 9px 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #0f172a;
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        td.location-name {
+            font-weight: bold;
+            text-align: left;
+            background-color: #1a2332;
+        }
+
+        /* Target Threshold Highlight Column (>4") */
+        th.target-header {
+            background-color: #0284c7;
+            color: #ffffff;
+            font-weight: 800;
+            border: 2px solid var(--accent-blue);
+        }
+
+        td.target-pop {
+            background-color: var(--accent-blue-bg);
+            font-weight: 800;
+            color: var(--accent-blue);
+            font-size: 0.95rem;
+            border-left: 2px solid var(--accent-blue);
+            border-right: 2px solid var(--accent-blue);
+        }
+
+        /* Forecast Discussion */
+        .discussion-box {
+            background-color: #0f172a;
+            border-left: 4px solid var(--accent-blue);
+            padding: 14px;
+            border-radius: 0 6px 6px 0;
+            font-size: 0.92rem;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        /* Action Buttons */
+        .decision-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.1s ease, background-color 0.15s ease;
+            text-align: center;
+            width: 100%;
+        }
+
+        .btn:active {
+            transform: scale(0.99);
+        }
+
+        .btn-treat {
+            background-color: var(--btn-treat);
+        }
+
+        .btn-treat:hover {
+            background-color: var(--btn-treat-hover);
+        }
+
+        .btn-hold {
+            background-color: var(--btn-hold);
+        }
+
+        .btn-hold:hover {
+            background-color: var(--btn-hold-hover);
+        }
+
+        .intro-screen, .completion-screen {
+            text-align: left;
+            line-height: 1.6;
+        }
+
+        .intro-screen h1 {
+            font-size: 1.4rem;
+            color: var(--accent-blue);
+            margin-top: 0;
+        }
+
+        .intro-screen h2 {
+            font-size: 1.05rem;
+            margin-top: 18px;
+            margin-bottom: 6px;
+            color: var(--text-main);
+        }
+
+        .intro-screen p, .intro-screen ul {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin: 6px 0;
+        }
+
+        .intro-screen ul {
+            padding-left: 20px;
+        }
+
+        .btn-start {
+            width: 100%;
+            margin-top: 20px;
+            background-color: var(--accent-blue);
+            color: #000;
+            font-size: 1.05rem;
+            font-weight: bold;
+        }
+
+        .btn-start:hover {
+            background-color: #7dd3fc;
+        }
+    </style>
 </head>
 <body>
-  <div class="card">
-    <div id="game-ui">
-      <span id="round-num" style="color: #94a3b8; font-size: 0.85rem;">ROUND 1 OF 5</span>
-      <h2 id="round-title">Day 1: Winter Storm Outlook</h2>
-      <div id="conf-tag" class="tag tag-high">HIGH FORECASTER CONFIDENCE</div>
-      <p id="round-desc">NWS reports an 80% chance of heavy freezing rain during morning rush hour.</p>
-      
-      <div class="stat-box">
-        <div>Spent: <strong id="spent-val">$0</strong></div>
-        <div>Incidents: <strong id="inc-val">0</strong></div>
-      </div>
 
-      <button class="btn-action" onclick="makeChoice(true)">Pre-Treat Roads ($2,000)</button>
-      <button class="btn-hold" onclick="makeChoice(false)">Hold Operations ($0)</button>
-      <div id="feedback-box" class="feedback hidden"></div>
+<div class="sim-container" id="simContainer">
+    <!-- Intro Briefing Screen -->
+    <div id="introScreen" class="intro-screen">
+        <h1>Operational Briefing</h1>
+        <p>Welcome to the Winter Weather Decision Simulator. You are serving as the <strong>Regional Transit & Operations Director</strong> for NMDOT, managing key interstate corridors during winter weather events.</p>
+        
+        <h2>The Hazard Threshold: 4 Inches</h2>
+        <p>In your district's winter maintenance plan, <strong>4 inches of snow accumulation</strong> is the critical operational tipping point:</p>
+        <ul>
+            <li><strong>Below 4":</strong> Traffic friction and routine plowing keep lanes open without major pre-treatment mobilization.</li>
+            <li><strong>At or Above 4":</strong> Heavy pack-snow bonds directly to cold asphalt, causing severe traction failure, jackknifed semi-trucks, and major corridor closures unless highways are pre-treated.</li>
+        </ul>
+
+        <h2>The Economic Model ($C/L = 20\%$)</h2>
+        <ul>
+            <li><strong>Pre-Treat Highways ($2,000):</strong> Prevents snow bonding and eliminates transit failure risk. This expenditure is non-refundable if snowfall stays below 4".</li>
+            <li><strong>Hold Operations ($0):</strong> Preserves operational budget. However, if snowfall reaches 4"+ without pre-treatment, unmitigated road ice causes severe crashes and emergency response costs ($10,000).</li>
+        </ul>
+
+        <button class="btn btn-start" onclick="startSim()">BEGIN SIMULATION</button>
     </div>
 
-    <div id="end-ui" class="hidden">
-      <h2>Simulation Complete</h2>
-      <p>Here is your final operational profile:</p>
-      <div class="stat-box" style="flex-direction: column; gap: 8px;">
-        <div>Total Operational Cost: <strong id="final-cost">$0</strong></div>
-        <div>Unwarned Ice Incidents: <strong id="final-inc">0</strong></div>
-      </div>
-      <p id="profile-text" style="line-height: 1.5; color: #cbd5e1;"></p>
-      <button class="btn-action" onclick="location.reload()">Replay Simulation</button>
-    </div>
-  </div>
+    <!-- Active Simulation Screen (Hidden Initially) -->
+    <div id="simScreen" style="display: none;">
+        <div class="header-bar">
+            <span class="round-badge" id="roundBadge">Round 1 of 5</span>
+            <span style="font-size: 0.8rem; color: var(--text-sub);">NWS Winter Decision Tool</span>
+        </div>
 
-  <script>
-    const rounds = [
-      { prob: 0.8, conf: "HIGH", desc: "80% chance of heavy freezing rain during morning rush hour.", tagClass: "tag-high" },
-      { prob: 0.2, conf: "HIGH", desc: "20% chance of light black ice on bridge decks overnight.", tagClass: "tag-high" },
-      { prob: 0.2, conf: "LOW", desc: "20% chance of light black ice. Forecaster Note: High model spread / LOW CONFIDENCE in storm track.", tagClass: "tag-low" },
-      { prob: 0.4, conf: "LOW", desc: "40% chance of icy roadways. Forecaster Note: LOW CONFIDENCE in timing.", tagClass: "tag-low" },
-      { prob: 0.1, conf: "HIGH", desc: "10% chance of brief snow flurries. High model agreement.", tagClass: "tag-high" }
+        <h2 class="scenario-title" id="locationTitle">I-40 through Tijeras Canyon</h2>
+        <div class="budget-info">
+            Pre-Treat Cost: <strong>$2,000</strong> &nbsp;|&nbsp; Unmitigated Loss: <strong>$10,000</strong> &nbsp;($C/L = 20\%$)
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th rowspan="2">Location</th>
+                        <th colspan="3">Snowfall Amounts</th>
+                        <th colspan="5">Chance of Seeing More Than</th>
+                    </tr>
+                    <tr>
+                        <th>Low</th>
+                        <th>Exp</th>
+                        <th>High</th>
+                        <th>>1"</th>
+                        <th>>2"</th>
+                        <th class="target-header">>4"</th>
+                        <th>>6"</th>
+                        <th>>8"</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Dynamically Inserted -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="discussion-box" id="discussionBox">
+            <!-- Dynamically Inserted -->
+        </div>
+
+        <div class="decision-section">
+            <button class="btn btn-treat" onclick="makeDecision('PRE-TREAT')">PRE-TREAT HIGHWAYS ($2,000)</button>
+            <button class="btn btn-hold" onclick="makeDecision('HOLD')">HOLD OPERATIONS ($0)</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // PASTE YOUR GOOGLE APPS SCRIPT WEBHOOK URL HERE
+    const WEBHOOK_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEBHOOK_URL_HERE";
+
+    const scenarios = [
+        {
+            round: 1,
+            table: { loc: "I-40 Tijeras Canyon", low: '2"', exp: '5"', high: '8"', p1: "95%", p2: "80%", p4: "60%", p6: "30%", p8: "10%" },
+            discussion: "A winter storm crossing central New Mexico tonight into tomorrow will bring cold temperatures and widespread snowfall to areas above 6,000 feet, including the I-40 corridor through Tijeras Canyon, during tomorrow morning's commute."
+        },
+        {
+            round: 2,
+            table: { loc: "I-40 Tijeras Canyon", low: '0"', exp: '1"', high: '5"', p1: "50%", p2: "35%", p4: "20%", p6: "8%", p8: "0%" },
+            discussion: "A winter storm crossing central New Mexico tonight into tomorrow will bring cold temperatures and widespread snowfall to areas above 6,000 feet, including the I-40 corridor through Tijeras Canyon, during tomorrow morning's commute."
+        },
+        {
+            round: 3,
+            table: { loc: "I-40 Tijeras Canyon", low: '0"', exp: '1"', high: '5"', p1: "50%", p2: "35%", p4: "20%", p6: "8%", p8: "0%" },
+            discussion: "Model guidance shows significant discrepancies with regard to storm track. Some models show the heaviest snow near Santa Fe, while others have the highest totals in the Sandia/Manzano Mountains."
+        },
+        {
+            round: 4,
+            table: { loc: "I-40 Tijeras Canyon", low: '0"', exp: '1"', high: '5"', p1: "50%", p2: "35%", p4: "20%", p6: "8%", p8: "0%" },
+            discussion: "Model agreement is very high, with the majority of models showing a band of snowfall setting up over the Sandia/Manzano Mountains."
+        },
+        {
+            round: 5,
+            table: { loc: "I-40 Tijeras Canyon", low: '0"', exp: '1"', high: '9"', p1: "55%", p2: "38%", p4: "20%", p6: "12%", p8: "5%" },
+            discussion: "A winter storm crossing central New Mexico tonight into tomorrow will bring cold temperatures and widespread snowfall to areas above 6,000 feet, including the I-40 corridor through Tijeras Canyon, during tomorrow morning's commute."
+        }
     ];
 
-    let current = 0, spent = 0, incidents = 0, choices = [];
+    let currentRound = 0;
+    let userResponses = {};
 
-    function makeChoice(tookAction) {
-      const r = rounds[current];
-      choices.push({ round: current + 1, action: tookAction, conf: r.conf, prob: r.prob });
-      
-      if (tookAction) {
-        spent += 2000;
-      } else if (Math.random() < r.prob) {
-        incidents++;
-        spent += 8000; // Penalty cost
-      }
-
-      document.getElementById('spent-val').innerText = '$' + spent.toLocaleString();
-      document.getElementById('inc-val').innerText = incidents;
-
-      current++;
-      if (current < rounds.length) {
-        loadRound();
-      } else {
-        showEnd();
-      }
+    function startSim() {
+        document.getElementById("introScreen").style.display = "none";
+        document.getElementById("simScreen").style.display = "block";
+        renderRound();
     }
 
-    function loadRound() {
-      const r = rounds[current];
-      document.getElementById('round-num').innerText = `ROUND ${current + 1} OF 5`;
-      document.getElementById('round-title').innerText = `Day ${current + 1}: Winter Storm Outlook`;
-      document.getElementById('round-desc').innerText = r.desc;
-      const tag = document.getElementById('conf-tag');
-      tag.innerText = `${r.conf} FORECASTER CONFIDENCE`;
-      tag.className = `tag ${r.tagClass}`;
+    function renderRound() {
+        window.scrollTo(0, 0);
+        const data = scenarios[currentRound];
+        document.getElementById("roundBadge").innerText = `Round ${data.round} of 5`;
+        
+        // Render Table
+        document.getElementById("tableBody").innerHTML = `
+            <tr>
+                <td class="location-name">${data.table.loc}</td>
+                <td>${data.table.low}</td>
+                <td>${data.table.exp}</td>
+                <td>${data.table.high}</td>
+                <td>${data.table.p1}</td>
+                <td>${data.table.p2}</td>
+                <td class="target-pop">${data.table.p4}</td>
+                <td>${data.table.p6}</td>
+                <td>${data.table.p8}</td>
+            </tr>
+        `;
+
+        // Render Discussion
+        document.getElementById("discussionBox").innerHTML = `<strong>FORECASTER DISCUSSION:</strong><br>${data.discussion}`;
     }
 
-    function showEnd() {
-      document.getElementById('game-ui').classList.add('hidden');
-      document.getElementById('end-ui').classList.remove('hidden');
-      document.getElementById('final-cost').innerText = '$' + spent.toLocaleString();
-      document.getElementById('final-inc').innerText = incidents;
-      
-      const r2 = choices[1].action; // 20% High Conf
-      const r3 = choices[2].action; // 20% Low Conf
+    function makeDecision(choice) {
+        userResponses[`round${currentRound + 1}`] = choice;
 
-      let text = "";
-      if (!r2 && r3) {
-        text = "<strong>Key Finding:</strong> Like most decision-makers in Dr. Lace Padilla's research, adding the 'LOW CONFIDENCE' label on Round 3 caused you to play it safe—even though the probability (20%) was identical to Round 2!";
-      } else {
-        text = "You completed the 5-day cycle. Compare your Round 2 vs. Round 3 choices with the rest of the room to see how 'Low Confidence' tags altered team decisions.";
-      }
-      document.getElementById('profile-text').innerHTML = text;
+        if (currentRound < scenarios.length - 1) {
+            currentRound++;
+            renderRound();
+        } else {
+            submitData();
+        }
     }
-  </script>
+
+    function submitData() {
+        window.scrollTo(0, 0);
+        document.getElementById("simScreen").innerHTML = `
+            <div class="completion-screen" style="text-align: center; padding: 40px 10px;">
+                <h2 style="color: var(--accent-blue); font-size: 1.5rem; margin-bottom: 8px;">Simulation Complete</h2>
+                <p style="color: var(--text-sub); font-size: 1rem;">Your operational calls have been recorded successfully.</p>
+                <p style="color: var(--text-main); font-weight: 600; margin-top: 20px;">Thank you for participating!</p>
+            </div>
+        `;
+
+        if (WEBHOOK_URL && WEBHOOK_URL !== "YOUR_GOOGLE_APPS_SCRIPT_WEBHOOK_URL_HERE") {
+            // Using text/plain prevents CORS preflight blocks with Google Apps Script webhooks
+            fetch(WEBHOOK_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(userResponses)
+            }).catch(err => console.error("Error submitting data:", err));
+        }
+    }
+</script>
+
 </body>
 </html>
