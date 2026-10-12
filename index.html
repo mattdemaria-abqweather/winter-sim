@@ -378,7 +378,7 @@
             </div>
         `;
 
-        if (WEBHOOK_URL && WEBHOOK_URL !== "YOUR_GOOGLE_APPS_SCRIPT_WEBHOOK_URL_HERE") {
+        if (WEBHOOK_URL && WEBHOOK_URL !== "https://script.google.com/a/macros/noaa.gov/s/AKfycbw68deyd_QUUkJfeWFq15ijC9fawP-CpB6P2y2MXQKMFQDLBRUQK9aEtxgBIXS6XUZd/exec") {
             // Using text/plain prevents CORS preflight blocks with Google Apps Script webhooks
             fetch(WEBHOOK_URL, {
                 method: "POST",
