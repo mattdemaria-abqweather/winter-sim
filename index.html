@@ -366,8 +366,7 @@
             submitData();
         }
     }
-
-    function submitData() {
+function submitData() {
         window.scrollTo(0, 0);
         document.getElementById("simScreen").innerHTML = `
             <div class="completion-screen" style="text-align: center; padding: 40px 10px;">
@@ -378,15 +377,21 @@
         `;
 
         if (WEBHOOK_URL && WEBHOOK_URL !== "YOUR_GOOGLE_APPS_SCRIPT_WEBHOOK_URL_HERE") {
-            // Using text/plain prevents CORS preflight blocks with Google Apps Script webhooks
-            fetch(WEBHOOK_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(userResponses)
-            }).catch(err => console.error("Error submitting data:", err));
+            // Build URL with parameters
+            const params = new URLSearchParams({
+                round1: userResponses.round1 || "",
+                round2: userResponses.round2 || "",
+                round3: userResponses.round3 || "",
+                round4: userResponses.round4 || "",
+                round5: userResponses.round5 || ""
+            });
+
+            // Send via image beacon (100% bypasses CORS & redirect blocks)
+            const beacon = new Image();
+            beacon.src = `${WEBHOOK_URL}?${params.toString()}`;
         }
-    }   
+    }
+ 
 </script>
 
 </body>
