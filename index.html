@@ -368,7 +368,7 @@
         }
     }
 
-    function submitData() {
+function submitData() {
         window.scrollTo(0, 0);
         document.getElementById("simScreen").innerHTML = `
             <div class="completion-screen" style="text-align: center; padding: 40px 10px;">
@@ -387,7 +387,7 @@
                 body: JSON.stringify(userResponses)
             }).catch(err => console.error("Error submitting data:", err));
         }
-    }
+    }   
 </script>
 
 </body>
