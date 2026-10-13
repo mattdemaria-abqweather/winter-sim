@@ -293,7 +293,6 @@
 </div>
 
 <script>
-    // PASTE YOUR GOOGLE APPS SCRIPT WEBHOOK URL HERE
     const WEBHOOK_URL = "https://script.google.com/a/macros/noaa.gov/s/AKfycbw68deyd_QUUkJfeWFq15ijC9fawP-CpB6P2y2MXQKMFQDLBRUQK9aEtxgBIXS6XUZd/exec";
 
     const scenarios = [
@@ -368,7 +367,7 @@
         }
     }
 
-function submitData() {
+    function submitData() {
         window.scrollTo(0, 0);
         document.getElementById("simScreen").innerHTML = `
             <div class="completion-screen" style="text-align: center; padding: 40px 10px;">
@@ -378,7 +377,7 @@ function submitData() {
             </div>
         `;
 
-        if (WEBHOOK_URL && WEBHOOK_URL !== "https://script.google.com/a/macros/noaa.gov/s/AKfycbw68deyd_QUUkJfeWFq15ijC9fawP-CpB6P2y2MXQKMFQDLBRUQK9aEtxgBIXS6XUZd/exec") {
+        if (WEBHOOK_URL && WEBHOOK_URL !== "YOUR_GOOGLE_APPS_SCRIPT_WEBHOOK_URL_HERE") {
             // Using text/plain prevents CORS preflight blocks with Google Apps Script webhooks
             fetch(WEBHOOK_URL, {
                 method: "POST",
