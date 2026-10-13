@@ -337,7 +337,6 @@
         const data = scenarios[currentRound];
         document.getElementById("roundBadge").innerText = `Round ${data.round} of 5`;
         
-        // Render Table
         document.getElementById("tableBody").innerHTML = `
             <tr>
                 <td class="location-name">${data.table.loc}</td>
@@ -352,7 +351,6 @@
             </tr>
         `;
 
-        // Render Discussion
         document.getElementById("discussionBox").innerHTML = `<strong>FORECASTER DISCUSSION:</strong><br>${data.discussion}`;
     }
 
@@ -366,32 +364,37 @@
             submitData();
         }
     }
-function submitData() {
+
+    function submitData() {
         window.scrollTo(0, 0);
+        
+        // Show completion message
         document.getElementById("simScreen").innerHTML = `
             <div class="completion-screen" style="text-align: center; padding: 40px 10px;">
                 <h2 style="color: var(--accent-blue); font-size: 1.5rem; margin-bottom: 8px;">Simulation Complete</h2>
                 <p style="color: var(--text-sub); font-size: 1rem;">Your operational calls have been recorded successfully.</p>
                 <p style="color: var(--text-main); font-weight: 600; margin-top: 20px;">Thank you for participating!</p>
             </div>
+            <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
         `;
 
-        if (WEBHOOK_URL && WEBHOOK_URL !== "YOUR_GOOGLE_APPS_SCRIPT_WEBHOOK_URL_HERE") {
-            // Build URL with parameters
-            const params = new URLSearchParams({
-                round1: userResponses.round1 || "",
-                round2: userResponses.round2 || "",
-                round3: userResponses.round3 || "",
-                round4: userResponses.round4 || "",
-                round5: userResponses.round5 || ""
-            });
+        // Create and submit a standard HTML form targeting the hidden iframe
+        const form = document.createElement("form");
+        form.method = "GET";
+        form.action = WEBHOOK_URL;
+        form.target = "hidden_iframe";
 
-            // Send via image beacon (100% bypasses CORS & redirect blocks)
-            const beacon = new Image();
-            beacon.src = `${WEBHOOK_URL}?${params.toString()}`;
+        for (const key in userResponses) {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = key;
+            input.value = userResponses[key];
+            form.appendChild(input);
         }
+
+        document.body.appendChild(form);
+        form.submit();
     }
- 
 </script>
 
 </body>
