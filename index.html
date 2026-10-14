@@ -1,21 +1,446 @@
-<!-- INTRO SCREEN -->
-<div id="introScreen" class="intro-screen">
-    <p><strong>Operational Context:</strong> You are the District Winter Operations Manager responsible for winter maintenance along the I-40 corridor through Tijeras Canyon.</p>
-    <p>A winter storm system is approaching central New Mexico. Your objective is to evaluate probabilistic snow forecasts and determine whether to deploy crews for proactive anti-icing / pre-treatment prior to tomorrow morning's commute.</p>
-    
-    <!-- CLEAN OPERATIONAL COST MATRIX -->
-    <div class="cost-box">
-        <strong style="color: var(--accent-blue); font-size: 0.88rem;">OPERATIONAL ASSESSMENT MATRIX:</strong>
-        <div style="font-size: 0.82rem; margin-top: 6px; line-height: 1.45;">
-            • <strong>Pre-Treatment Call Cost:</strong> Anti-icing equipment & chemical deployment = <strong>$2,000</strong><br>
-            • <strong>Unmitigated Impact Cost:</strong> Corridor gridlock, accidents, & recovery operations = <strong>$10,000</strong>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Winter Weather Decision Simulator</title>
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --accent-blue: #0284c7;
+            --accent-hover: #0369a1;
+            /* Subtle Blue Highlight for Target Column */
+            --highlight-blue-bg: rgba(2, 132, 199, 0.22);
+            --highlight-blue-text: #38bdf8;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --border-color: #334155;
+            --btn-hold: #475569;
+            --btn-hold-hover: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 12px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .title {
+            font-size: clamp(1.1rem, 4vw, 1.25rem);
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .subtitle {
+            font-size: clamp(0.75rem, 3vw, 0.85rem);
+            color: var(--text-sub);
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: var(--accent-blue);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 12px;
+            margin-top: 4px;
+        }
+
+        /* Stacked Tables Container for Mobile */
+        .tables-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .table-card {
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: #0f172a;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            text-align: center;
+        }
+
+        th, td {
+            padding: 8px 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: #0f172a;
+            color: var(--text-sub);
+            font-weight: 600;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+        }
+
+        /* Target Column Blue Highlight */
+        th.target-header, td.target-pop {
+            background-color: var(--highlight-blue-bg) !important;
+            color: var(--highlight-blue-text) !important;
+            font-weight: 700;
+        }
+
+        .discussion-box {
+            background-color: #0f172a;
+            border-left: 4px solid var(--accent-blue);
+            padding: 12px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.85rem;
+            line-height: 1.45;
+            color: #cbd5e1;
+            margin-bottom: 18px;
+        }
+
+        .cost-box {
+            background: #0f172a;
+            border: 1px solid var(--accent-blue);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .decision-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .decision-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-align: center;
+            color: var(--text-sub);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            min-height: 48px;
+            padding: 12px 6px;
+            border: none;
+            border-radius: 8px;
+            font-size: clamp(0.8rem, 3.2vw, 0.9rem);
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.15s ease, transform 0.05s ease;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-pretreat {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+
+        .btn-pretreat:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-hold {
+            background-color: var(--btn-hold);
+            color: white;
+        }
+
+        .btn-hold:hover {
+            background-color: var(--btn-hold-hover);
+        }
+
+        .intro-screen {
+            text-align: center;
+            padding: 4px 0;
+        }
+
+        .intro-screen p {
+            font-size: 0.88rem;
+            line-height: 1.45;
+            color: #cbd5e1;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+
+        .btn-start {
+            width: 100%;
+            min-height: 48px;
+            background-color: var(--accent-blue);
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 14px;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+            .btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="title">NMDOT Winter Weather Decision Simulator</div>
+        <div class="subtitle">I-40 Tijeras Canyon Operational Assessment</div>
+    </div>
+
+    <!-- INTRO SCREEN -->
+    <div id="introScreen" class="intro-screen">
+        <p><strong>Operational Context:</strong> You are the District Winter Operations Manager responsible for winter maintenance along the I-40 corridor through Tijeras Canyon.</p>
+        <p>A winter storm system is approaching central New Mexico. Your objective is to evaluate probabilistic snow forecasts and determine whether to deploy crews for proactive anti-icing / pre-treatment prior to tomorrow morning's commute.</p>
+        
+        <!-- OPERATIONAL ASSESSMENT MATRIX -->
+        <div class="cost-box">
+            <strong style="color: var(--accent-blue); font-size: 0.88rem;">OPERATIONAL ASSESSMENT MATRIX:</strong>
+            <div style="font-size: 0.82rem; margin-top: 6px; line-height: 1.45;">
+                • <strong>Pre-Treatment Call Cost:</strong> Anti-icing equipment & chemical deployment = <strong>$2,000</strong><br>
+                • <strong>Unmitigated Impact Cost:</strong> Corridor gridlock, accidents, & recovery operations = <strong>$10,000</strong>
+            </div>
+        </div>
+
+        <div style="background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 16px; text-align: left; border: 1px solid var(--border-color);">
+            <strong style="color: var(--highlight-blue-text); font-size: 0.85rem;">FORECASTER BRIEFING:</strong>
+            <p style="font-size: 0.82rem; margin-top: 4px; margin-bottom: 0;">A winter storm crossing central New Mexico tonight into tomorrow will bring cold temperatures and widespread snowfall to areas above 6,000 feet, including the I-40 corridor through Tijeras Canyon, during tomorrow morning's commute.</p>
+        </div>
+
+        <button class="btn-start" onclick="startSim()">BEGIN SIMULATION</button>
+    </div>
+
+    <!-- SIMULATION SCREEN -->
+    <div id="simScreen" style="display: none;">
+        <div style="text-align: center; margin-bottom: 12px;">
+            <span id="roundBadge" class="badge">Round 1 of 5</span>
+        </div>
+
+        <div class="tables-wrapper">
+            <!-- Table 1: Snowfall Ranges -->
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th rowspan="2" style="width: 35%;">Location</th>
+                            <th colspan="3">Snowfall Ranges</th>
+                        </tr>
+                        <tr>
+                            <th style="width: 21%;">Low</th>
+                            <th style="width: 22%;">Exp</th>
+                            <th style="width: 22%;">High</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableRanges">
+                        <!-- Dynamic Content -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Table 2: Percent Chance Accumulation Exceeds -->
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th colspan="5">% Chance Accumulation Exceeds...</th>
+                        </tr>
+                        <tr>
+                            <th>&gt; 1"</th>
+                            <th>&gt; 2"</th>
+                            <th class="target-header">&gt; 4"</th>
+                            <th>&gt; 6"</th>
+                            <th>&gt; 8"</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableProbs">
+                        <!-- Dynamic Content -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="discussionBox" class="discussion-box" style="display: none;">
+            <!-- Dynamic Forecaster Discussion -->
+        </div>
+
+        <div class="decision-section">
+            <div class="decision-title">Select Operational Action for I-40 Tijeras Canyon:</div>
+            <div class="btn-group">
+                <button class="btn btn-pretreat" onclick="makeDecision('PRE-TREAT')">PRE-TREAT ROADS ($2,000)</button>
+                <button class="btn btn-hold" onclick="makeDecision('HOLD')">HOLD / MONITOR ($0)</button>
+            </div>
         </div>
     </div>
-
-    <div style="background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 16px; text-align: left; border: 1px solid var(--border-color);">
-        <strong style="color: var(--highlight-blue-text); font-size: 0.85rem;">FORECASTER BRIEFING:</strong>
-        <p style="font-size: 0.82rem; margin-top: 4px; margin-bottom: 0;">A winter storm crossing central New Mexico tonight into tomorrow will bring cold temperatures and widespread snowfall to areas above 6,000 feet, including the I-40 corridor through Tijeras Canyon, during tomorrow morning's commute.</p>
-    </div>
-
-    <button class="btn-start" onclick="startSim()">BEGIN SIMULATION</button>
 </div>
+
+<script>
+    // Paste your personal Google Apps Script Web App deployment URL here
+    const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycb...YOUR_PERSONAL_WEB_APP_URL.../exec";
+
+    const scenarios = [
+        {
+            round: 1,
+            table: { loc: "I-40 Tijeras Canyon", low: '2"', exp: '5"', high: '8"', p1: "95%", p2: "80%", p4: "60%", p6: "30%", p8: "10%" },
+            discussion: "" 
+        },
+        {
+            round: 2,
+            table: { loc: "I-40 Tijeras Canyon", low: '0"', exp: '1"', high: '5"', p1: "50%", p2: "35%", p4: "20%", p6: "8%", p8: "0%" },
+            discussion: "" 
+        },
+        {
+            round: 3,
+            table: { loc: "I-40 Tijeras Canyon", low: '0"', exp: '1"', high: '5"', p1: "50%", p2: "35%", p4: "20%", p6: "8%", p8: "0%" },
+            discussion: "<strong>Forecast Confidence: Low</strong><br>Model guidance shows significant discrepancies regarding storm track. Some models focus heavy snow near Santa Fe, while others favor the Sandia/Manzano Mountains."
+        },
+        {
+            round: 4,
+            table: { loc: "I-40 Tijeras Canyon", low: '0"', exp: '1"', high: '5"', p1: "50%", p2: "35%", p4: "20%", p6: "8%", p8: "0%" },
+            discussion: "<strong>Forecast Confidence: High</strong><br>Model agreement is very high, with the majority of guidance consistently positioning a concentrated snowfall band over the Sandia/Manzano Mountains."
+        },
+        {
+            round: 5,
+            table: { loc: "I-40 Tijeras Canyon", low: '0"', exp: '1"', high: '9"', p1: "55%", p2: "38%", p4: "20%", p6: "12%", p8: "5%" },
+            discussion: "" 
+        }
+    ];
+
+    let currentRound = 0;
+    let userResponses = {};
+
+    function startSim() {
+        document.getElementById("introScreen").style.display = "none";
+        document.getElementById("simScreen").style.display = "block";
+        renderRound();
+    }
+
+    function renderRound() {
+        window.scrollTo(0, 0);
+        const data = scenarios[currentRound];
+        document.getElementById("roundBadge").innerText = `Round ${data.round} of 5`;
+        
+        // Render Table 1: Snowfall Ranges
+        document.getElementById("tableRanges").innerHTML = `
+            <tr>
+                <td style="text-align: left; font-weight: 600;">${data.table.loc}</td>
+                <td>${data.table.low}</td>
+                <td>${data.table.exp}</td>
+                <td>${data.table.high}</td>
+            </tr>
+        `;
+
+        // Render Table 2: Exceedance Probabilities
+        document.getElementById("tableProbs").innerHTML = `
+            <tr>
+                <td>${data.table.p1}</td>
+                <td>${data.table.p2}</td>
+                <td class="target-pop">${data.table.p4}</td>
+                <td>${data.table.p6}</td>
+                <td>${data.table.p8}</td>
+            </tr>
+        `;
+
+        const discBox = document.getElementById("discussionBox");
+        if (data.discussion && data.discussion.trim() !== "") {
+            discBox.style.display = "block";
+            discBox.innerHTML = data.discussion;
+        } else {
+            discBox.style.display = "none";
+        }
+    }
+
+    function makeDecision(choice) {
+        userResponses[`round${currentRound + 1}`] = choice;
+
+        if (currentRound < scenarios.length - 1) {
+            currentRound++;
+            renderRound();
+        } else {
+            submitData();
+        }
+    }
+
+    function submitData() {
+        window.scrollTo(0, 0);
+        
+        document.getElementById("simScreen").innerHTML = `
+            <div class="completion-screen" style="text-align: center; padding: 40px 10px;">
+                <h2 style="color: var(--accent-blue); font-size: 1.4rem; margin-bottom: 8px;">Simulation Complete</h2>
+                <p style="color: var(--text-sub); font-size: 0.95rem;">Your operational calls have been recorded successfully.</p>
+                <p style="color: var(--text-main); font-weight: 600; margin-top: 20px;">Thank you for participating!</p>
+            </div>
+            <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+        `;
+
+        const form = document.createElement("form");
+        form.method = "GET";
+        form.action = WEBHOOK_URL;
+        form.target = "hidden_iframe";
+        form.autocomplete = "off";
+
+        for (const key in userResponses) {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = key;
+            input.value = userResponses[key];
+            form.appendChild(input);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>
+
+</body>
+</html>
